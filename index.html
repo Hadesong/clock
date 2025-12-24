@@ -16,15 +16,25 @@
             background-color: black;
             height: 100vh;
             width: 100%;
+            display: -ms-flexbox;
             display: flex;
+            -ms-flex-pack: start;
             justify-content: flex-start;
+            -ms-flex-align: center;
             align-items: center;
             white-space: nowrap;
             overflow: hidden;
             letter-spacing: -60px;
             cursor: pointer;
             /*padding-left: 2vw;*/
-            gap: 8vw;
+            -ms-user-select: none;
+            -moz-user-select: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        body > div:first-child {
+            margin-right: 8vw;
         }
 
         body span {
@@ -33,6 +43,8 @@
             color: white;
             opacity: 0.7;
             display: inline-block;
+            -ms-transition: -ms-transform 0.3s ease;
+            -webkit-transition: -webkit-transform 0.3s ease;
             transition: transform 0.3s ease;
         }
 
@@ -52,7 +64,7 @@
 </div>
 </body>
 <script>
-  const audio = new Audio('tip.mp3')
+  var audio = new Audio('tip.mp3')
   var oldHour = 0
   //循环获取时间并更新显示
   setInterval(function () {
@@ -87,10 +99,10 @@
     document.getElementById('m2').innerHTML = m2
 
     // 获取目标元素
-    const targetElement = document.getElementById('body')
+    var targetElement = document.getElementById('body')
 
     //整点蜂鸣
-    const callList = [8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
+    var callList = [8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
 
     // 判断当前分钟是否在 0 到 1 之间
     if (m < 2) {
@@ -104,24 +116,36 @@
     if (oldHour != h) {
       oldHour = h
 
-      if (callList.includes(h)) {
-        audio.play()
-        //播放audio 音频
+      if (callList.indexOf(h) !== -1) {
+        // IE11兼容的音频播放
+        try {
+          audio.currentTime = 0
+          var playPromise = audio.play()
+          if (playPromise && playPromise.catch) {
+            playPromise.catch(function(error) {
+              console.log('音频播放失败:', error)
+            })
+          }
+        } catch (error) {
+          console.log('音频播放失败:', error)
+        }
       }
-      const spans = document.querySelectorAll('span')
-      spans.forEach((span, index, spans) => {
-        // const randomAngle = index % 2 == 0 ?  Math.random() * 10 : -Math.random() * 10 ; // 角度范围
-        const randomAngle = Math.random() * 40 - 20 // 角度范围
-        span.style.transform = `rotate(${randomAngle}deg)`
-        span.style.color = `rgb(${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)})`
-        span.style.opacity = index % 2 === 0 ? 0.9 : 0.6
-      })
+      var spans = document.querySelectorAll('span')
+      for (var i = 0; i < spans.length; i++) {
+        var span = spans[i]
+        var randomAngle = Math.random() * 40 - 20 // 角度范围
+        span.style.msTransform = 'rotate(' + randomAngle + 'deg)'
+        span.style.webkitTransform = 'rotate(' + randomAngle + 'deg)'
+        span.style.transform = 'rotate(' + randomAngle + 'deg)'
+        span.style.color = 'rgb(' + Math.floor(Math.random() * 255) + ', ' + Math.floor(Math.random() * 255) + ', ' + Math.floor(Math.random() * 255) + ')'
+        span.style.opacity = i % 2 === 0 ? 0.9 : 0.6
+      }
     }
 
   }, 1000)
 
   // 全屏切换状态
-  let isFullscreen = false
+  var isFullscreen = false
 
   // 点击body切换全屏
   document.getElementById('body').addEventListener('click', function () {
@@ -135,13 +159,13 @@
 
   // 全屏函数
   function toFull () {
-    const fullScreenObj = new fullScreen()
+    var fullScreenObj = new fullScreen()
     fullScreenObj.Fullscreen('body')
   }
 
   // 退出全屏函数
   function exitFull () {
-    const fullScreenObj = new fullScreen()
+    var fullScreenObj = new fullScreen()
     fullScreenObj.exitFullscreen()
   }
 </script>
