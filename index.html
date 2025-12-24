@@ -18,27 +18,66 @@
             width: 100%;
             display: -ms-flexbox;
             display: flex;
-            -ms-flex-pack: start;
-            justify-content: flex-start;
+            -ms-flex-pack: center;
+            justify-content: center;
             -ms-flex-align: center;
-            align-items: center;
+            align-items: flex-end;
             white-space: nowrap;
             overflow: hidden;
             letter-spacing: -60px;
             cursor: pointer;
-            /*padding-left: 2vw;*/
             -ms-user-select: none;
             -moz-user-select: none;
             -webkit-user-select: none;
             user-select: none;
         }
 
+        .flash-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: transparent;
+            pointer-events: none;
+            /*z-index: 9;*/
+            transition: opacity 2s ease-out;
+            opacity: 1;
+        }
+
+        .flash-overlay.breathing {
+            animation: breathe-overlay 5s ease-in-out infinite;
+        }
+
+        .flash-overlay.fade-out {
+            opacity: 0;
+        }
+
+        @keyframes breathe-overlay {
+            0%, 100% {
+                background-color: transparent;
+            }
+            50% {
+                background-color: #ff4400;
+            }
+        }
+
+        @keyframes breathe {
+            0%, 100% {
+                background-color: black;
+            }
+            50% {
+                background-color: #ff4400;
+            }
+        }
+
+
         body > div:first-child {
-            margin-right: 8vw;
+            /*margin-right: 15vw;*/
         }
 
         body span {
-            font-size: 45vw;
+            /*font-size: 46vw;*/
             font-family: 'Ubuntu0';
             color: white;
             opacity: 0.7;
@@ -48,24 +87,68 @@
             transition: transform 0.3s ease;
         }
 
+        .h {
+            font-size: 63vw;
+            z-index: 9999;
+        }
+
+        .m {
+            font-size: 40vw;
+            z-index: 9999;
+        }
 
     </style>
 </head>
 
 <body id="body">
 <div>
-    <span id="h1">0</span>
-    <span id="h2">0</span>
+    <span class="h" id="h1">0</span>
+    <span class="h" id="h2">0</span>
+    <span class="m" id="m1">0</span>
+    <span class="m" id="m2">0</span>
 </div>
-
-<div>
-    <span id="m1">0</span>
-    <span id="m2">0</span>
-</div>
+<div class="flash-overlay" id="flashOverlay"></div>
 </body>
 <script>
-  var audio = new Audio('tip.mp3')
   var oldHour = 0
+  var targetElement = document.getElementById('flashOverlay')
+  var flashInterval = null
+  var isFlashing = false
+
+  // 开始闪烁效果
+  function startFlashing () {
+    if (isFlashing) return
+
+    isFlashing = true
+    targetElement.classList.add('breathing')
+  }
+
+  // 停止呼吸灯效果
+  function stopFlashing () {
+    if (!isFlashing) return
+
+    targetElement.classList.remove('breathing')
+    targetElement.classList.add('fade-out')
+
+    // 2秒后完全重置
+    setTimeout(() => {
+      targetElement.classList.remove('fade-out')
+      isFlashing = false
+    }, 2000)
+  }
+
+  // 检查时间并应用效果
+  function checkTimeAndApplyEffect () {
+    var d = new Date()
+    var m = d.getMinutes()
+
+    if (m === 9) {
+      startFlashing()
+    } else {
+      stopFlashing()
+    }
+  }
+
   //循环获取时间并更新显示
   setInterval(function () {
     var d = new Date()
@@ -77,14 +160,12 @@
     var m1 = 0
     var m2 = 0
     if (h < 10) {
-      // h = "0" + h
       h2 = h
     } else {
       h1 = Math.floor(h / 10)
       h2 = Math.floor(h % 10)
     }
     if (m < 10) {
-      // m = "0" + m
       m2 = m
     } else {
       m1 = Math.floor(m / 10)
@@ -98,47 +179,22 @@
     document.getElementById('m1').innerHTML = m1
     document.getElementById('m2').innerHTML = m2
 
-    // 获取目标元素
-    var targetElement = document.getElementById('body')
-
-    //整点蜂鸣
-    var callList = [8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
-
-    // 判断当前分钟是否在 0 到 1 之间
-    if (m < 2) {
-      // 如果是，则将背景颜色改为橙色
-      targetElement.style.backgroundColor = '#ff4400'
-    } else {
-      // 否则，将背景颜色恢复为初始颜色
-      targetElement.style.backgroundColor = 'black'
-    }
+    // 检查时间并应用呼吸灯效果
+    checkTimeAndApplyEffect()
 
     if (oldHour != h) {
       oldHour = h
 
-      if (callList.indexOf(h) !== -1) {
-        // IE11兼容的音频播放
-        try {
-          audio.currentTime = 0
-          var playPromise = audio.play()
-          if (playPromise && playPromise.catch) {
-            playPromise.catch(function(error) {
-              console.log('音频播放失败:', error)
-            })
-          }
-        } catch (error) {
-          console.log('音频播放失败:', error)
-        }
-      }
       var spans = document.querySelectorAll('span')
       for (var i = 0; i < spans.length; i++) {
         var span = spans[i]
-        var randomAngle = Math.random() * 40 - 20 // 角度范围
+        var randomAngle = Math.random() * 40 - 20
         span.style.msTransform = 'rotate(' + randomAngle + 'deg)'
         span.style.webkitTransform = 'rotate(' + randomAngle + 'deg)'
         span.style.transform = 'rotate(' + randomAngle + 'deg)'
-        span.style.color = 'rgb(' + Math.floor(Math.random() * 255) + ', ' + Math.floor(Math.random() * 255) + ', ' + Math.floor(Math.random() * 255) + ')'
-        span.style.opacity = i % 2 === 0 ? 0.9 : 0.6
+        var colors = [Math.floor(Math.random() * 255), Math.floor(Math.random() * 255), Math.floor(Math.random() * 255)]
+        colors[Math.floor(Math.random() * 3)] = 255
+        span.style.color = 'rgb(' + colors[0] + ', ' + colors[1] + ', ' + colors[2] + ')'
       }
     }
 
@@ -147,6 +203,21 @@
   // 全屏切换状态
   var isFullscreen = false
 
+  // 监听全屏状态变化
+  function handleFullscreenChange () {
+    var fullscreenElement = document.fullscreenElement ||
+      document.webkitFullscreenElement ||
+      document.mozFullScreenElement ||
+      document.msFullscreenElement
+    isFullscreen = !!fullscreenElement
+  }
+
+  // 添加全屏状态监听器
+  document.addEventListener('fullscreenchange', handleFullscreenChange)
+  document.addEventListener('webkitfullscreenchange', handleFullscreenChange)
+  document.addEventListener('mozfullscreenchange', handleFullscreenChange)
+  document.addEventListener('MSFullscreenChange', handleFullscreenChange)
+
   // 点击body切换全屏
   document.getElementById('body').addEventListener('click', function () {
     if (isFullscreen) {
@@ -154,7 +225,6 @@
     } else {
       toFull()
     }
-    isFullscreen = !isFullscreen
   })
 
   // 全屏函数
@@ -275,53 +345,4 @@
       }
     }
   }
-
-  fullscreen_class_is_loaded = 1
-
-  var full = new fullScreen(() => {
-    console.log('不支持全屏')
-  })
-
-  full.screenError((e) => {
-    console.log('进去全屏失败')
-  })
-
-  // 全屏请求必须在事件处理函数中调用，否则将会被拒绝。
-
-  function toFull () {
-    full.Fullscreen('html')
-    document.getElementById('click_to_full').style.display = 'none'
-    document.getElementById('click_exit_full').style.display = 'inline'
-  }
-
-  // 退出全屏 退出到上次的状态
-  function exitFull () {
-    full.exitFullscreen()
-    document.getElementById('click_exit_full').style.display = 'none'
-    document.getElementById('click_to_full').style.display = 'inline'
-  }
-
-  //全屏状态改变事件
-  const obj = {
-    enter: (e) => {
-      // 如果退出全屏 退出的还是全屏状态，将会触发进入全屏的回调，这种情况比较少 注意一下
-      // show_msg("进入全屏", 2000);
-      document.getElementById('click_to_full').style.display = 'none'
-      document.getElementById('click_exit_full').style.display = 'inline'
-    },
-    quit: (e) => {
-      // show_msg("退出全屏", 2000);
-      // 通常不会出现嵌套的情况
-      document.getElementById('click_to_full').style.display = 'inline'
-      document.getElementById('click_exit_full').style.display = 'none'
-    },
-  }
-  full.screenChange(obj.enter, obj.quit)
-
-  document.getElementById('click_to_full').style.display = 'inline'
-  document.getElementById('click_exit_full').style.display = 'none'
-
-  fullscreen_start_is_ok = 1
-
-
 </script>
